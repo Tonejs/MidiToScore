@@ -87,11 +87,14 @@ export class Track {
 				(event) => event.type === "noteOff"
 			) as (MidiNoteOffEvent & WithAbsoluteTime)[];
 
+			let channelIsSet = false;
+
 			while (noteOns.length) {
 				const currentNote = noteOns.shift();
 
 				// Set the channel based on the note.
 				this.channel = currentNote.channel;
+				channelIsSet = true;
 
 				// Find the corresponding note off.
 				const offIndex = noteOffs.findIndex(
@@ -119,6 +122,10 @@ export class Track {
 				(event) => event.type === "controller"
 			) as (MidiControllerEvent & WithAbsoluteTime)[];
 			controlChanges.forEach((event) => {
+				if (!channelIsSet) {
+					this.channel = event.channel;
+					channelIsSet = true;
+				}
 				this.addCC({
 					number: event.controllerType,
 					ticks: event.absoluteTime,
@@ -130,6 +137,10 @@ export class Track {
 				(event) => event.type === "pitchBend"
 			) as (MidiPitchBendEvent & WithAbsoluteTime)[];
 			pitchBends.forEach((event) => {
+				if (!channelIsSet) {
+					this.channel = event.channel;
+					channelIsSet = true;
+				}
 				this.addPitchBend({
 					ticks: event.absoluteTime,
 					// Scale the value between -2^13 to 2^13 to -2 to 2.
